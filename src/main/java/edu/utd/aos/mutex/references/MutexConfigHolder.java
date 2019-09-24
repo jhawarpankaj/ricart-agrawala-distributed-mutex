@@ -37,7 +37,7 @@ public class MutexConfigHolder {
 		}catch(Exception e) {
 			throw new MutexException("Error while reading configuration file." + e);
 		}
-		
+		Logger.info("Config initialized...");
 	}
 	
 	/**
