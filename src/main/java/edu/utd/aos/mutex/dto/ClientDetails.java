@@ -19,4 +19,9 @@ public class ClientDetails {
 	 * Id of the client machine.
 	 */
 	int id;
+	
+	/**
+	 * Local port number.
+	 */
+	String port;
 }

@@ -19,6 +19,11 @@ public class MutexReferences {
 	public static final int CONST_CODE_ERROR = 1;
 	
 	/**
+	 * Separator used across message transfer between nodes.
+	 */
+	public static final String SEPARATOR = "||";
+	
+	/**
 	 * Private constructor for utility class.
 	 */
 	private MutexReferences() {

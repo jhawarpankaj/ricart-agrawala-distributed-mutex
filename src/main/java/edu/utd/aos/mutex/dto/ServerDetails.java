@@ -24,4 +24,9 @@ public class ServerDetails {
 	 * Path of the file.
 	 */
 	String filePath;
+	
+	/**
+	 * Local port number.
+	 */
+	String port;
 }

@@ -45,7 +45,7 @@ public class Files {
 				}
 			}catch(IOException e) {
 				throw new MutexException("Error while creating file replicas on the server." + e);
-			}			
+			}
 			break;
 		}
 	}
