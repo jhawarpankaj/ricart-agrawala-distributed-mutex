@@ -6,6 +6,7 @@ import edu.utd.aos.mutex.references.MutexConfigHolder;
 import edu.utd.aos.mutex.references.MutexReferences;
 import edu.utd.aos.mutex.utils.Files;
 import edu.utd.aos.mutex.utils.Host;
+import edu.utd.aos.mutex.utils.SocketHandler;
 
 public class Main {
 
@@ -27,5 +28,6 @@ public class Main {
 
 	private static void setup() throws MutexException {		
 		Files.createFileReplicaOnServer();
+		SocketHandler.setup();
 	}
 }

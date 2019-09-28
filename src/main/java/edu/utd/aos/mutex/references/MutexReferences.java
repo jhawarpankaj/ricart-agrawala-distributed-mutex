@@ -21,7 +21,7 @@ public class MutexReferences {
 	/**
 	 * Separator used across message transfer between nodes.
 	 */
-	public static final String SEPARATOR = "||";
+	public static final String SEPARATOR = "\\|\\|";
 	
 	/**
 	 * Private constructor for utility class.

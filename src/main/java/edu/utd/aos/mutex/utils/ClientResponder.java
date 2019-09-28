@@ -12,12 +12,12 @@ import edu.utd.aos.mutex.references.MutexConfigHolder;
 import edu.utd.aos.mutex.references.MutexReferences;
 import edu.utd.aos.mutex.references.OperationEnum;
 
-public class ClientHandler extends Thread {
+public class ClientResponder extends Thread {
     final Socket worker;
 	final DataInputStream dis;
     final DataOutputStream dos;
     
-    public ClientHandler(Socket worker, DataInputStream dis, DataOutputStream dos) {
+    public ClientResponder(Socket worker, DataInputStream dis, DataOutputStream dos) {
     	this.worker = worker;
     	this.dis = dis;
     	this.dos = dos;
@@ -32,15 +32,21 @@ public class ClientHandler extends Thread {
 	    	try {
 	    		operation = OperationEnum.valueOf(input[0].toUpperCase());
 	    	}catch(IllegalArgumentException e) {
-	    		Logger.error("Operation not supported by server." + e);
+	    		Logger.error("Operation not supported. Error: " + e);
 	    	}
 	    	
 	    	switch(operation) {
-		    	case READ:
+		    	case REPLY:
 		    		break;	    		
 		    	case WRITE:
 		    		break;	    		
-		    	case ENQUIRY:
+		    	case READ:
+		    		String opn = input[0];
+		    		String file = input[1];
+		    		long timestamp = Long.parseLong(input[2]);
+		    		if(!Operation.getCriticalSectionStatus()) {
+		    			
+		    		}
 		    		Logger.info("Got ENQUIRY request from client: " + worker.getInetAddress().getHostName());
 		    		ApplicationConfig applicationConfig = MutexConfigHolder.getApplicationConfig();
 		    		String listOfFiles = String.join(MutexReferences.SEPARATOR, applicationConfig.getListOfFiles());
@@ -51,5 +57,6 @@ public class ClientHandler extends Thread {
     	}catch(IOException e) {
     		Logger.error("Error while reading/writing message from/to client." + e);
     	}
-    }    	
+    }  
+
 }

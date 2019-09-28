@@ -2,7 +2,9 @@ package edu.utd.aos.mutex.utils;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import org.tinylog.Logger;
 
@@ -12,6 +14,7 @@ import edu.utd.aos.mutex.dto.NodeDetails;
 import edu.utd.aos.mutex.dto.ServerDetails;
 import edu.utd.aos.mutex.exception.MutexException;
 import edu.utd.aos.mutex.references.MutexConfigHolder;
+import edu.utd.aos.mutex.references.MutexReferences;
 
 /**
  * For all server/client details.
@@ -22,9 +25,11 @@ public class Host {
 	
 	private static String localhost;
 	private static String port;
+	private static int id;
 	private static boolean isServer = false;
 	private static ArrayList<ArrayList<String>> allServers = new ArrayList<ArrayList<String>>();
-	private static ArrayList<ArrayList<String>> allClients = new ArrayList<ArrayList<String>>();
+	private static ArrayList<String[]> allOtherClients = new ArrayList<String[]>();
+	private static ArrayList<String> cachedFiles = new ArrayList<String>();
 	
 	/**
 	 * Initialization for all host details.
@@ -35,7 +40,7 @@ public class Host {
 		Logger.info("Local host details initialization...");
 		setLocalHostPort();
 		setAllServers();
-		setAllClients();
+		setAllOtherClients();
 		Logger.info("Local host initialization complete...");
 		
 	}
@@ -62,6 +67,7 @@ public class Host {
 			if(localhost.equalsIgnoreCase(server.getName())) {
 				isServer = true;
 				port = server.getPort();
+				id = server.getId();
 				flag = true;
 				break;
 			}
@@ -72,6 +78,7 @@ public class Host {
 					flag = true;
 					isServer = false;
 					port = client.getPort();
+					id = client.getId();
 					break;
 				}
 			}
@@ -99,16 +106,23 @@ public class Host {
 	/**
 	 * Set all clients list.
 	 */
-	private static void setAllClients() {
+	private static void setAllOtherClients() {
 		ApplicationConfig applicationConfig = MutexConfigHolder.getApplicationConfig();
 		NodeDetails nodeDetails = applicationConfig.getNodeDetails();
 		List<ClientDetails> clientDetails = nodeDetails.getClientDetails();
 		for(ClientDetails client: clientDetails) {
-			ArrayList<String> temp = new ArrayList<String>();
-			temp.add(client.getName());
-			temp.add(client.getPort());
-			allClients.add(new ArrayList<String>(temp));			
+			String[] temp = new String[2];
+			temp[0] = client.getName();
+			temp[1] = client.getPort();
+			if(!client.getName().equals(localhost)) {
+				allOtherClients.add(temp);
+			}
 		}		
+	}
+	
+	public static void setCachedFiles(String listOfFiles) {
+		String[] temp = listOfFiles.split(MutexReferences.SEPARATOR);
+		cachedFiles = new ArrayList<String>(Arrays.asList(temp));
 	}
 	
 	/**
@@ -121,8 +135,8 @@ public class Host {
 	/**
 	 * @return All client nodes list.
 	 */
-	public static ArrayList<ArrayList<String>> getAllClients(){
-		return allClients;
+	public static ArrayList<String[]> getAllOtherClients(){
+		return allOtherClients;
 	}
 	 
 	/**
@@ -147,6 +161,29 @@ public class Host {
 	 */
 	public static String getLocalPort() {
 		return port;
+	}
+	
+	/**
+	 * @return Id of the localhost.
+	 */
+	public static int getId() {
+		return id;
+	}
+	
+	/**
+	 * @return One of the servers randomly.
+	 */
+	public static ArrayList<String> getARandomServer() {
+		Random rand = new Random();
+		ArrayList<ArrayList<String>> allServersList = getAllServers();		
+		return allServersList.get(rand.nextInt(allServersList.size()));
+	}
+	
+	/**
+	 * @return all cached files.
+	 */
+	public static ArrayList<String> getCahcedFiles() {
+		return cachedFiles;
 	}
 	
 	/**
