@@ -27,7 +27,7 @@ public class SocketHandler {
 	
 	public static void setup() throws MutexException{
 		if(Host.isServer()) {
-			try {
+			try {				
 				serverSocketsetup();
 			} catch (IOException e) {
 				throw new MutexException("Error while closing socket on server" + e);
@@ -43,16 +43,17 @@ public class SocketHandler {
 	 * @throws MutexException 
 	 */
 	private static void clientSocketSetup() throws MutexException {
+		Logger.info("Setting up for client sockets.");
 		cacheServerDetails();
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException e) {
+			Logger.error("Error while pausing thread to wait for all client to start.");
+		}
 		Thread t1 = new OpenServerSockets();
 		t1.start();
 		Thread t2 = new ClientOperationGenerator();
 		t2.start();
-	}
-
-	private static void openServerSockets() {
-		// TODO Auto-generated method stub
-		
 	}
 
 	/**
@@ -61,6 +62,7 @@ public class SocketHandler {
 	 * @throws MutexException
 	 */
 	private static void cacheServerDetails() throws MutexException {
+		Logger.info("Caching up file details from server for future.");
 		ArrayList<String> aRandomServer = Host.getARandomServer();
 		String address = aRandomServer.get(0);
 		int port = Integer.parseInt(aRandomServer.get(1));
@@ -81,7 +83,8 @@ public class SocketHandler {
 	        socket.close();
 	    }catch(Exception e) {
 	    	throw new MutexException("Error while getting file details from the server. Error" + e);
-	    }		
+	    }
+	    Logger.info("Cached all files.");
 	}
 
 	/**
@@ -90,6 +93,7 @@ public class SocketHandler {
 	 * @throws IOException 
 	 */
 	private static void serverSocketsetup() throws MutexException, IOException {
+		Logger.info("Setting up for server sockets.");
 		ServerSocket serverSocket = null;
 		try {
 			serverSocket = new ServerSocket(Integer.parseInt(Host.getLocalPort()));

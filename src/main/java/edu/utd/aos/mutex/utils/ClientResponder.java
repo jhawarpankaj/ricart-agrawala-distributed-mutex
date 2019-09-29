@@ -7,13 +7,12 @@ import java.net.Socket;
 
 import org.tinylog.Logger;
 
-import edu.utd.aos.mutex.dto.ApplicationConfig;
-import edu.utd.aos.mutex.references.MutexConfigHolder;
+import edu.utd.aos.mutex.exception.MutexException;
 import edu.utd.aos.mutex.references.MutexReferences;
 import edu.utd.aos.mutex.references.OperationEnum;
 
 public class ClientResponder extends Thread {
-    final Socket worker;
+    final Socket worker; //request came from this worker.
 	final DataInputStream dis;
     final DataOutputStream dos;
     
@@ -36,27 +35,62 @@ public class ClientResponder extends Thread {
 	    	}
 	    	
 	    	switch(operation) {
-		    	case REPLY:
-		    		break;	    		
-		    	case WRITE:
-		    		break;	    		
-		    	case READ:
-		    		String opn = input[0];
+		    	case REPLY:		    		
+		    		String host = worker.getInetAddress().getHostName();		    		
 		    		String file = input[1];
-		    		long timestamp = Long.parseLong(input[2]);
-		    		if(!Operation.getCriticalSectionStatus()) {
-		    			
+		    		String readWriteOpn = input[2];
+		    		Logger.info("Got REPLY from client: " + host + ", for file: " + file + ", and operation: " + readWriteOpn);
+		    		Operation.setMyRepliesMap(file, readWriteOpn, host);
+		    		if(Operation.gotRequiredReplies(file, readWriteOpn)) {
+		    			Logger.info("Got all required REPLIES to enter critical section");
+		    			Operation.enterCriticalSection(file, readWriteOpn);
+		    			Operation.executeCriticalSection(input);
+		    			Operation.exitCriticalSection(file, readWriteOpn);
+		    			Operation.updateRepliesMap(file, readWriteOpn);
+		    			Operation.sendDeferredReply(file, readWriteOpn);
 		    		}
-		    		Logger.info("Got ENQUIRY request from client: " + worker.getInetAddress().getHostName());
-		    		ApplicationConfig applicationConfig = MutexConfigHolder.getApplicationConfig();
-		    		String listOfFiles = String.join(MutexReferences.SEPARATOR, applicationConfig.getListOfFiles());
-		    		Logger.info("Responding client: " + worker.getInetAddress().getHostName() + ", with details: " + listOfFiles);
-		    		dos.writeUTF(listOfFiles);
+		    		break;
+		    	case WRITE:
+		    	case READ:
+		    		performReadWriteOperation(input);
 		    		break;
 	    	}    	
     	}catch(IOException e) {
     		Logger.error("Error while reading/writing message from/to client." + e);
     	}
-    }  
+    }
+
+	private void performReadWriteOperation(String[] input) {
+		String host = worker.getInetAddress().getHostName();
+		int port = worker.getPort();
+		String operation = input[0].toString();
+		String file = input[1];
+		String content = null;
+		long timestamp = Long.parseLong(input[2]);
+		
+		Logger.info("Got " + operation + " request from client: " + host + ", for file: " + file);
+		
+		if(!Operation.inCriticalSectionStatus(file, operation) && Operation.isMyTimeStampLarger(file, operation, timestamp)) {
+			try {
+				if(OperationEnum.READ.toString().equalsIgnoreCase(operation)) {
+					Operation.sendReadReply(host, port, file, operation);
+				}
+				else {
+					content = input[3];
+					Operation.sendWriteReply(host, port, file, operation, content);
+				}
+				
+			} catch (MutexException e) {
+				Logger.error("Error while sending reply message to node: " + worker.getInetAddress().getHostName() + ", for file:" + file + ".Error: " + e);							
+			}
+		}
+		
+		else {
+			Logger.info("Deferring REPLY message for the above request.");
+			Operation.setMyDeferredRepliesMap(input, host, port);	
+			
+		}
+		
+	}  
 
 }

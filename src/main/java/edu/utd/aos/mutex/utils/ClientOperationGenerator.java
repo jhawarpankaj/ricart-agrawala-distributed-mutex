@@ -8,7 +8,7 @@ public class ClientOperationGenerator extends Thread {
 	@Override
 	public void run() {
 		while(true) {
-			String operation = Operation.generateRequest();
+			String operation = Operation.generateClientRequest();
 			Thread t = new ClientRequestSender(operation);
 			t.start();
 			try {

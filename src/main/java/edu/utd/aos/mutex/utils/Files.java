@@ -12,7 +12,6 @@ import edu.utd.aos.mutex.dto.NodeDetails;
 import edu.utd.aos.mutex.dto.ServerDetails;
 import edu.utd.aos.mutex.exception.MutexException;
 import edu.utd.aos.mutex.references.MutexConfigHolder;
-import edu.utd.aos.mutex.references.MutexReferences;
 
 /**
  * Util class for replicating files across all servers.
@@ -22,14 +21,17 @@ import edu.utd.aos.mutex.references.MutexReferences;
 public class Files {
 	
 	public static void createFileReplicaOnServer() throws MutexException {
+		Logger.info("Creating replica of files on the server.");
 		ApplicationConfig applicationConfig = MutexConfigHolder.getApplicationConfig();
 		NodeDetails nodeDetails = applicationConfig.getNodeDetails();
 		List<ServerDetails> serverDetails = nodeDetails.getServerDetails();
 		List<String> filesList = applicationConfig.getListOfFiles();
 		String localhost = Host.getLocalHost();
+		Logger.info("Localhost: " + localhost);
 		
-		for(ServerDetails server: serverDetails) {
-			try {
+		try {
+			for(ServerDetails server: serverDetails) {
+				
 				if (localhost.equalsIgnoreCase(server.getName())) {
 					Logger.info("Copying all files on the server.");
 					String uniqueDestToCopyFile = server.getFilePath() + server.getId();
@@ -41,14 +43,15 @@ public class Files {
 						File sourceFileToCopy = new File(fileToCopy);					
 						FileUtils.copyFileToDirectory(sourceFileToCopy, destDirectory);
 					}
+					Host.setListOfFiles();
 					Logger.info("Copied all files on the server: " + localhost);
+					break;
 				}
-			}catch(IOException e) {
-				throw new MutexException("Error while creating file replicas on the server." + e);
 			}
-			break;
-		}
+		}catch(IOException e) {			
+			throw new MutexException("Error while creating file replicas on the server." + e);	
 	}
+}
 	
 	/**
 	 * Constructor for utility class.

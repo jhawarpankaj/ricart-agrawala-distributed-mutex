@@ -19,11 +19,12 @@ public class Amazon {
 			if(max < val + 1) {
 				max = val + 1;
 			}
-		}		
+		}
 		for(Map.Entry<String, Integer> a: hm.entrySet()) {
 			if(a.getValue() == max) {
 				res.add(a.getKey());
 			}
 		}
+		System.out.println(res);
 	}
 }

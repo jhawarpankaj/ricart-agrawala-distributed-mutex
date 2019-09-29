@@ -1,5 +1,8 @@
 package edu.utd.aos.mutex.references;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 /**
  * Constants and references used across project.
  * 
@@ -22,6 +25,13 @@ public class MutexReferences {
 	 * Separator used across message transfer between nodes.
 	 */
 	public static final String SEPARATOR = "\\|\\|";
+	
+	public static final String SEPARATOR_TEXT = "||";
+	
+	/**
+	 * Constant encoding to be used.
+	 */
+	public static final Charset ENCODING = StandardCharsets.UTF_8;
 	
 	/**
 	 * Private constructor for utility class.
