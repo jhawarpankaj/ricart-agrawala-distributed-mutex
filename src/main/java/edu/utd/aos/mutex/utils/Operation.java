@@ -310,6 +310,7 @@ public class Operation {
 	        out = new DataOutputStream(socket.getOutputStream());
 	        out.writeUTF(OperationEnum.REPLY.toString() + MutexReferences.SEPARATOR_TEXT + file + MutexReferences.SEPARATOR_TEXT + operation);
 	        socket.close();
+	        clearDeferredRepliesMap(file, operation);
 	    }catch(Exception e) {
 	    	throw new MutexException("Error while sending a REPLY for READ message to the client. Error: " + e);
 	    }
@@ -324,6 +325,7 @@ public class Operation {
 			socket = new Socket(address, port);			
 	        out = new DataOutputStream(socket.getOutputStream());
 	        out.writeUTF(OperationEnum.REPLY.toString() + MutexReferences.SEPARATOR_TEXT + file + MutexReferences.SEPARATOR_TEXT + operation + MutexReferences.SEPARATOR_TEXT + content);
+	        clearDeferredRepliesMap(file, operation);
 	        socket.close();
 	    }catch(Exception e) {
 	    	throw new MutexException("Error while sending a REPLY for READ message to the client. Error: " + e);
