@@ -86,6 +86,12 @@ public class ClientResponder extends Thread {
 		}
 		
 		else {
+			if(Operation.inCriticalSectionStatus(file, operation)) {
+				Logger.debug("DEFFERING BECAUSE I AM IN CRITICAL SECTION FOR: " + file + ":" + operation);
+			}
+			else if(Operation.isMyTimeStampLarger(file, operation, timestamp)) {
+				Logger.debug("DEFFERING BECAUSE MY TIMESTAMP IS LARGER FOR: " + file + ":" + operation);
+			}
 			Logger.info("Deferring REPLY message for the above request.");
 			Logger.debug("My Request map: " + Operation.getMyReqMap());
 			Logger.debug("My Replies map: " + Operation.getMyRepliesMap());

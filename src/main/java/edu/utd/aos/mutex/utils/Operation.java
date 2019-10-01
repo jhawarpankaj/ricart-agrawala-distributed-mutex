@@ -207,7 +207,7 @@ public class Operation {
 		}
 		else {
 			Long myTimestamp = myRequestsMap.get(file, opn).get(0);
-			return myTimestamp >= timestamp ? true: false;
+			return myTimestamp > timestamp ? true: false;
 		}
 	}
 	
@@ -238,7 +238,7 @@ public class Operation {
 			myRequestsMap.remove(file, opn);
 		}
 		else {
-			temp.remove(0);
+			temp.remove((int)0);
 			myRequestsMap.put(file, opn, new ArrayList<Long>(temp));
 		}		
 	}
@@ -267,6 +267,21 @@ public class Operation {
 			temp.remove(Long.parseLong(timestamp));
 			myRequestsMap.put(file, opn, new ArrayList<Long>(temp));
 		}		
+	}
+	
+	public static void clearDeferredRepliesMap(String file, String opn) {
+				
+		ArrayList<String> temp = myDeferredReplies.get(file, opn);
+		if(temp == null) {
+			return;
+		}
+		else if(temp.isEmpty()) {
+			myDeferredReplies.remove(file, opn);
+		}
+		else {
+			temp.remove(0);
+			myDeferredReplies.put(file, opn, new ArrayList<String>(temp));
+		}
 	}
 
 	public static boolean inCriticalSectionStatus(String file, String opn) {
@@ -299,7 +314,7 @@ public class Operation {
 	        socket.close();
 	    }catch(Exception e) {
 	    	throw new MutexException("Error while sending a REPLY for READ message to the client. Error: " + e);
-	    }		
+	    }
 	}
 	
 	public static void sendWriteReply(String address, int port, String file, String operation, String content) throws MutexException {
