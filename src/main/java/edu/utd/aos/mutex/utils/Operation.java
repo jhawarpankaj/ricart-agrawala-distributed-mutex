@@ -2,6 +2,8 @@ package edu.utd.aos.mutex.utils;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.net.Socket;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import org.apache.commons.io.FileUtils;
 import org.tinylog.Logger;
 
 import com.google.common.collect.HashBasedTable;
@@ -58,7 +61,9 @@ public class Operation {
 		availableRequests.add(OperationEnum.WRITE.toString());		
 		Random rand = new Random();
 		String file = cachedFiles.get(rand.nextInt(cachedFiles.size()));
+		Logger.debug("File selected randomly: " + file);
 		String operation = availableRequests.get(rand.nextInt(availableRequests.size()));
+		Logger.debug("Operation selected randomly: " + operation);
 		String result = "";
 		long now = Instant.now().toEpochMilli();
 		if(operation.equalsIgnoreCase(OperationEnum.READ.toString())) {
@@ -69,6 +74,13 @@ public class Operation {
 			result = result + operation + MutexReferences.SEPARATOR_TEXT + file + MutexReferences.SEPARATOR_TEXT + now + MutexReferences.SEPARATOR_TEXT + content;
 		}
 		setMyRequestsMap(file, operation, now);
+		
+		File fileWrite = new File(Host.getFilePath() + "operations.txt");
+		try {
+			FileUtils.writeStringToFile(fileWrite, result + "\n", MutexReferences.ENCODING, true);
+		} catch (IOException e) {
+			Logger.error("Error while writing operations to file: " + e);
+		}
 		return result;
 	}
 	
@@ -111,16 +123,24 @@ public class Operation {
 		
 		Map<String, Integer> status = myRepliesMap.get(file, opn);
 		
-		if(status == null || !status.containsKey(host)) {
+		if(status == null){
 			Map<String, Integer> updatedMap = new HashMap<String, Integer>();
 			updatedMap.put(host, 1);
 			myRepliesMap.put(file, opn, new HashMap<String, Integer>(updatedMap));
-		}
+		}		
 		else {
-			int count = status.get(host);
-			status.put(host, count + 1);
-			myRepliesMap.put(file, opn, new HashMap<String, Integer>(status));
+			if(status.containsKey(host)) {
+				int count = status.get(host);
+				status.put(host, count + 1);
+				myRepliesMap.put(file, opn, new HashMap<String, Integer>(status));
+			}
+			else {
+				status.put(host, 1);
+				myRepliesMap.put(file, opn, new HashMap<String, Integer>(status));
+			}			
 		}
+		
+		Logger.debug("Updated my replies map: " + myRepliesMap);
 	}
 	
 	/**
@@ -130,15 +150,14 @@ public class Operation {
 	public static void setMyDeferredRepliesMap(String[] input, String host, int port) { 
 		String operation = input[0];
 		String file = input[1];
-		String content = null;
 		ArrayList<String> arrayList = myDeferredReplies.get(file, operation);
 		if(arrayList == null) {
 			ArrayList<String> temp = new ArrayList<String>();
-			temp.add(String.join(host + MutexReferences.SEPARATOR_TEXT + port + MutexReferences.SEPARATOR_TEXT, input));
+			temp.add(host + MutexReferences.SEPARATOR_TEXT + port + MutexReferences.SEPARATOR_TEXT + String.join(MutexReferences.SEPARATOR_TEXT , input));
 			myDeferredReplies.put(file, operation, new ArrayList<String>(temp));
 		}
 		else {
-			arrayList.add(String.join(host + MutexReferences.SEPARATOR_TEXT + port + MutexReferences.SEPARATOR_TEXT, input));
+			arrayList.add(host + MutexReferences.SEPARATOR_TEXT + port + MutexReferences.SEPARATOR_TEXT + String.join(MutexReferences.SEPARATOR_TEXT, input));
 			myDeferredReplies.put(file, operation, new ArrayList<String>(arrayList));
 		}
 	}
@@ -188,7 +207,7 @@ public class Operation {
 		}
 		else {
 			Long myTimestamp = myRequestsMap.get(file, opn).get(0);
-			return myTimestamp > timestamp ? true: false;
+			return myTimestamp >= timestamp ? true: false;
 		}
 	}
 	
@@ -198,10 +217,58 @@ public class Operation {
 	}
 	
 	public static void exitCriticalSection(String file, String opn) {
-		Logger.info("Exiting critical section.");
+		Logger.debug("Exiting critical section by deleting the request from my Map lists. Current my request Map: " + myRequestsMap);
+		clearMyRequestsMap(file, opn);
+		Logger.debug("After deleting the entry, my requests map: " + myRequestsMap);
 		inCriticalSection.put(file, opn, false);
+		Logger.info("Exited critical section.");
 	}
 	
+	/**
+	 * Clearing my requests map.
+	 * @param file File on which operation was being performed.
+	 * @param opn Operation being performed.
+	 */
+	public static void clearMyRequestsMap(String file, String opn) {
+		ArrayList<Long> temp = myRequestsMap.get(file, opn);		
+		if(temp == null) {
+			return;
+		}
+		else if(temp.isEmpty()) {
+			myRequestsMap.remove(file, opn);
+		}
+		else {
+			temp.remove(0);
+			myRequestsMap.put(file, opn, new ArrayList<Long>(temp));
+		}		
+	}
+	
+	public static Table<String, String, ArrayList<Long>> getMyReqMap() {
+		return myRequestsMap;
+	}
+	
+	public static Table<String, String, Map<String, Integer>> getMyRepliesMap() {
+		return myRepliesMap;
+	}
+	
+	public static Table<String, String, ArrayList<String>> getDeferredReplies() {
+		return myDeferredReplies;
+	}
+	
+	public static void clearMyRequestsMap(String file, String opn, String timestamp) {
+		ArrayList<Long> temp = myRequestsMap.get(file, opn);		
+		if(temp == null) {
+			return;
+		}
+		else if(temp.isEmpty()) {
+			myRequestsMap.remove(file, opn);
+		}
+		else {
+			temp.remove(Long.parseLong(timestamp));
+			myRequestsMap.put(file, opn, new ArrayList<Long>(temp));
+		}		
+	}
+
 	public static boolean inCriticalSectionStatus(String file, String opn) {
 		if(inCriticalSection.get(file, opn) == null) {
 			return false;
@@ -232,12 +299,11 @@ public class Operation {
 	        socket.close();
 	    }catch(Exception e) {
 	    	throw new MutexException("Error while sending a REPLY for READ message to the client. Error: " + e);
-	    }
-		
+	    }		
 	}
 	
 	public static void sendWriteReply(String address, int port, String file, String operation, String content) throws MutexException {
-		Logger.info("Attempting to send REPLY for WRITE request to node: " + address + " for file: " + file + ", from client: " + Host.getLocalHost());
+		Logger.info("Sending REPLY for WRITE request to node: " + address + " for file: " + file + " and operation: " + operation + ", from client: " + Host.getLocalHost());
 		port = Host.getPortNumber(address);
 		Socket socket = null; 
 	    DataOutputStream out = null;
@@ -292,7 +358,6 @@ public class Operation {
 		        	throw new MutexException("The server did not complete the read request of client: " + Host.getLocalHost());
 		        }
 		        Logger.info("Read last line of file: " + file + ", send from server: " + address + ". Text Read: " + response);
-		        Logger.info("Exiting critical section");
 		        serverSocket.close();
 		    }catch(Exception e) {
 		    	Logger.error("Error while sending request to server: " + address + ". Error: " + e);
@@ -329,8 +394,7 @@ public class Operation {
 			    }
 			}
 			if(replyFromServers.size() == Host.getAllServers().size()) {
-				Logger.info("Successfully updated all replica of file: " + file);
-				Logger.info("Exiting critical section");
+				Logger.info("Successfully updated all replicas of file: " + file);
 			}
 		}		
 	}
@@ -339,10 +403,11 @@ public class Operation {
 		
 		try {
 			ArrayList<String> arrayList = myDeferredReplies.get(file, readWriteOpn);
-			Logger.debug("Sending all deferred replies for: " + arrayList);
-			if(arrayList == null) {
+			if(arrayList == null || arrayList.isEmpty()) {
+				Logger.debug("No deferred replies to send.");
 				return;
 			}
+			
 			else {
 				Logger.info("Start sending all deferred replies.");
 				for(String pipedString: arrayList) {				

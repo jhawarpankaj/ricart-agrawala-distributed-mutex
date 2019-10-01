@@ -51,9 +51,9 @@ public class ClientHandler extends Thread {
 		    		break;
 		    	case WRITE:
 		    		String fileToUpdate = input[1];
-		    		String data = input[2];
+		    		String data = "\n" + input[2] + "\n";
 		    		File fileWrite = new File(Host.getFilePath() + fileToUpdate);
-		    		FileUtils.writeStringToFile(fileWrite, data, MutexReferences.ENCODING);
+		    		FileUtils.writeStringToFile(fileWrite, data, MutexReferences.ENCODING, true);
 		    		dos.writeUTF(Host.getLocalHost());
 		    		break;
 		    	case ENQUIRY:

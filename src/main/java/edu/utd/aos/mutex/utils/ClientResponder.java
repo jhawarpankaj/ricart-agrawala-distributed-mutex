@@ -35,7 +35,7 @@ public class ClientResponder extends Thread {
 	    	}
 	    	
 	    	switch(operation) {
-		    	case REPLY:		    		
+		    	case REPLY:
 		    		String host = worker.getInetAddress().getHostName();		    		
 		    		String file = input[1];
 		    		String readWriteOpn = input[2];
@@ -87,8 +87,10 @@ public class ClientResponder extends Thread {
 		
 		else {
 			Logger.info("Deferring REPLY message for the above request.");
-			Operation.setMyDeferredRepliesMap(input, host, port);	
-			
+			Logger.debug("My Request map: " + Operation.getMyReqMap());
+			Logger.debug("My Replies map: " + Operation.getMyRepliesMap());
+			Logger.debug("My Deferred Replies map: " + Operation.getDeferredReplies());
+			Operation.setMyDeferredRepliesMap(input, host, port);			
 		}
 		
 	}  

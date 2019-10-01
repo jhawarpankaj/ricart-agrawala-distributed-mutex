@@ -83,6 +83,7 @@ public class Host {
 					isServer = false;
 					localPort = client.getPort();
 					id = client.getId();
+					filePath = client.getFilePath() + id + "/";
 					break;
 				}
 			}

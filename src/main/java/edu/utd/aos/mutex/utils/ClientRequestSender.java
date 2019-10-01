@@ -6,6 +6,8 @@ import java.util.ArrayList;
 
 import org.tinylog.Logger;
 
+import edu.utd.aos.mutex.references.MutexReferences;
+
 public class ClientRequestSender extends Thread {
 	
 	String operation;
@@ -30,6 +32,12 @@ public class ClientRequestSender extends Thread {
 		        out.writeUTF(operation);
 		        socket.close();
 		    }catch(Exception e) {
+
+		    	String[] split = operation.split(MutexReferences.SEPARATOR);
+		    	String opn = split[0];
+		    	String file = split[1];
+		    	String timestamp = split[2];
+		    	Operation.clearMyRequestsMap(file, opn, timestamp);
 		    	Logger.error("Error while sending request to client: " + address + ". Error: " + e);
 		    }		        
 		}

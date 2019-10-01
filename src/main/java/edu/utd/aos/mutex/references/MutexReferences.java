@@ -22,16 +22,24 @@ public class MutexReferences {
 	public static final int CONST_CODE_ERROR = 1;
 	
 	/**
-	 * Separator used across message transfer between nodes.
+	 * Separator used across message transfer between nodes. Backslash for Regex Expression.
 	 */
 	public static final String SEPARATOR = "\\|\\|";
 	
+	/**
+	 * Separator.
+	 */
 	public static final String SEPARATOR_TEXT = "||";
 	
 	/**
 	 * Constant encoding to be used.
 	 */
 	public static final Charset ENCODING = StandardCharsets.UTF_8;
+	
+	/**
+	 * To wait until all client start.
+	 */
+	public static boolean firstRequest = true;
 	
 	/**
 	 * Private constructor for utility class.

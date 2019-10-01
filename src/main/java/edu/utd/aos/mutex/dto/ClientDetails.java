@@ -21,6 +21,11 @@ public class ClientDetails {
 	int id;
 	
 	/**
+	 * Root Path of the file.
+	 */
+	String filePath;
+	
+	/**
 	 * Local port number.
 	 */
 	String port;
