@@ -45,14 +45,18 @@ public class ClientResponder extends Thread {
 		    			Logger.info("Got all required REPLIES to enter critical section");
 		    			Operation.enterCriticalSection(file, readWriteOpn);
 		    			Operation.executeCriticalSection(input);
-		    			Operation.exitCriticalSection(file, readWriteOpn);
+		    			Operation.clearMyRequestsMap(file, readWriteOpn);
 		    			Operation.updateRepliesMap(file, readWriteOpn);
+		    			Operation.exitCriticalSection(file, readWriteOpn);		    			
 		    			Operation.sendDeferredReply(file, readWriteOpn);
 		    		}
 		    		break;
 		    	case WRITE:
 		    	case READ:
 		    		performReadWriteOperation(input);
+		    		break;
+		    	default:
+		    		Logger.error("Illegal operation, not known to client.");
 		    		break;
 	    	}    	
     	}catch(IOException e) {
@@ -86,16 +90,9 @@ public class ClientResponder extends Thread {
 		}
 		
 		else {
-			if(Operation.inCriticalSectionStatus(file, operation)) {
-				Logger.debug("DEFFERING BECAUSE I AM IN CRITICAL SECTION FOR: " + file + ":" + operation);
-			}
-			else if(Operation.isMyTimeStampLarger(file, operation, timestamp)) {
-				Logger.debug("DEFFERING BECAUSE MY TIMESTAMP IS LARGER FOR: " + file + ":" + operation);
-			}
-			Logger.info("Deferring REPLY message for the above request.");
+			Logger.info("Deferring REPLY for: " + operation + ", for file: " + file + ", and host: " + host);
 			Logger.debug("My Request map: " + Operation.getMyReqMap());
 			Logger.debug("My Replies map: " + Operation.getMyRepliesMap());
-			Logger.debug("My Deferred Replies map: " + Operation.getDeferredReplies());
 			Operation.setMyDeferredRepliesMap(input, host, port);			
 		}
 		
