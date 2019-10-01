@@ -42,7 +42,7 @@ public class ClientResponder extends Thread {
 		    		Logger.info("Got REPLY from client: " + host + ", for file: " + file + ", and operation: " + readWriteOpn);
 		    		Operation.setMyRepliesMap(file, readWriteOpn, host);
 		    		if(Operation.gotRequiredReplies(file, readWriteOpn)) {
-		    			Logger.info("Got all required REPLIES to enter critical section");
+		    			Logger.info("Got all required REPLIES to enter critical section for file: " + file + ", and operation: " + readWriteOpn);
 		    			Operation.enterCriticalSection(file, readWriteOpn);
 		    			Operation.executeCriticalSection(input);
 		    			Operation.clearMyRequestsMap(file, readWriteOpn);

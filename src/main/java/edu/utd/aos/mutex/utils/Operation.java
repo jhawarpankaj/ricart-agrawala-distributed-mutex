@@ -57,8 +57,8 @@ public class Operation {
 	public static String generateClientRequest() {
 		ArrayList<String> cachedFiles = Host.getCahcedFiles();		
 		ArrayList<String> availableRequests = new ArrayList<String>();
-		availableRequests.add(OperationEnum.READ.toString());
-		availableRequests.add(OperationEnum.WRITE.toString());		
+		availableRequests.add(OperationEnum.READ.toString().toUpperCase());
+		availableRequests.add(OperationEnum.WRITE.toString().toUpperCase());
 		Random rand = new Random();
 		String file = cachedFiles.get(rand.nextInt(cachedFiles.size()));
 		Logger.debug("File selected randomly: " + file);
@@ -84,17 +84,6 @@ public class Operation {
 		return result;
 	}
 	
-	/**
-	 * Generate critical section read/write req for the servers.
-	 */
-	public static String generateCriticalSectionRequest(String opn, String file) {
-		if(opn.equalsIgnoreCase(OperationEnum.READ.toString())) {
-			return OperationEnum.READ.toString() + MutexReferences.SEPARATOR_TEXT + file;
-		}
-		else {
-			return OperationEnum.WRITE.toString() + MutexReferences.SEPARATOR_TEXT + file;
-		}
-	}
 
 	/**
 	 * Set/Update the requests map.
@@ -102,6 +91,8 @@ public class Operation {
 	 * @param timestamp Current time.
 	 */
 	private static void setMyRequestsMap(String file, String operation, long timestamp) {
+		Logger.debug("Updating my requests map for file: " + file + ", operation: " + operation);
+		Logger.debug("Current status: " + myRequestsMap);
 		if(!(myRequestsMap.get(file, operation) == null)){
 			ArrayList<Long> temp = myRequestsMap.get(file, operation);
 			temp.add(timestamp);
@@ -112,6 +103,7 @@ public class Operation {
 			temp.add(timestamp);
 			myRequestsMap.put(file, operation, new ArrayList<Long>(temp));
 		}
+		Logger.debug("After update: " + myRequestsMap);
 	}
 	
 	/**
@@ -120,6 +112,9 @@ public class Operation {
 	 * @param response
 	 */
 	public static void setMyRepliesMap(String file, String opn, String host) {
+		
+		Logger.debug("Updating my replies map for file: " + file + ", operation: " + opn + ", from host: " + host);
+		Logger.debug("Current status: " + myRepliesMap);
 		
 		Map<String, Integer> status = myRepliesMap.get(file, opn);
 		
@@ -140,7 +135,7 @@ public class Operation {
 			}			
 		}
 		
-		Logger.debug("Updated my replies map: " + myRepliesMap);
+		Logger.debug("After update: " + myRepliesMap);
 	}
 	
 	/**
@@ -172,7 +167,7 @@ public class Operation {
 	 */
 	public static boolean gotRequiredReplies(String file, String opn) {
 		
-		Logger.debug("Current status of myRepliesMap: " + myRepliesMap);
+		Logger.debug("Checking my replies map to evaluate for critical section entry: " + myRepliesMap);
 		ApplicationConfig applicationConfig = MutexConfigHolder.getApplicationConfig();
 		NodeDetails nodeDetails = applicationConfig.getNodeDetails();
 		List<ClientDetails> clientDetails = nodeDetails.getClientDetails();
@@ -216,13 +211,13 @@ public class Operation {
 	}
 	
 	public static void enterCriticalSection(String file, String opn) {
-		Logger.info("Entering critical section.");
+		Logger.info("Entering critical section for file: " + file + ", and opeation: " + opn);
 		inCriticalSection.put(file, opn, true);
 	}
 	
 	public static void exitCriticalSection(String file, String opn) {		
 		inCriticalSection.put(file, opn, false);
-		Logger.info("Exited critical section.");
+		Logger.info("Exiting critical section for file: " + file + ", and operation: " + opn);
 	}
 	
 	/**
@@ -240,7 +235,7 @@ public class Operation {
 			myRequestsMap.remove(file, opn);
 		}
 		else {
-			temp.remove((int)0);
+			temp.remove(0);
 			myRequestsMap.put(file, opn, new ArrayList<Long>(temp));
 		}
 		Logger.debug("After clearing: " + myRequestsMap);

@@ -63,7 +63,7 @@ public class ClientHandler extends Thread {
 		    		dos.writeUTF(listOfFiles);
 		    		break;
 				default:
-					Logger.error("Illegal Operation type.");
+					Logger.error("Illegal Operation type, not known to servers.");
 					break;
 	    	}
     	}catch(IOException e) {
