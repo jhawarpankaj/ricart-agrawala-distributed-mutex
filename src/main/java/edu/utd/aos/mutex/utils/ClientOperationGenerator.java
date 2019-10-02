@@ -11,7 +11,7 @@ public class ClientOperationGenerator extends Thread {
 	public void run() {
 		while(true) {
 			String operation = Operation.generateClientRequest();
-			Thread t = new ClientRequestSender(operation);			
+			Thread t = new ClientRequestSender(operation);
 			try {
 				if(MutexReferences.firstRequest) {
 					MutexReferences.firstRequest = false;

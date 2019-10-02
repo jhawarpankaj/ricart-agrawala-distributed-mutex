@@ -45,11 +45,6 @@ public class SocketHandler {
 	private static void clientSocketSetup() throws MutexException {
 		Logger.info("Setting up for client sockets.");
 		cacheServerDetails();
-//		try {
-//			Thread.sleep(10000);
-//		} catch (InterruptedException e) {
-//			Logger.error("Error while pausing thread to wait for all client to start.");
-//		}
 		Thread t1 = new OpenServerSockets();
 		t1.start();
 		Thread t2 = new ClientOperationGenerator();

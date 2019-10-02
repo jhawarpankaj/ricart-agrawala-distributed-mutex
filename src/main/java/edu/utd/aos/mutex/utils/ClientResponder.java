@@ -40,20 +40,24 @@ public class ClientResponder extends Thread {
 		    		String file = input[1];
 		    		String readWriteOpn = input[2];
 		    		Logger.info("Got REPLY from client: " + host + ", for file: " + file + ", and operation: " + readWriteOpn);
-		    		Operation.setMyRepliesMap(file, readWriteOpn, host);
-		    		if(Operation.gotRequiredReplies(file, readWriteOpn)) {
-		    			Logger.info("Got all required REPLIES to enter critical section for file: " + file + ", and operation: " + readWriteOpn);
-		    			Operation.enterCriticalSection(file, readWriteOpn);
-		    			Operation.executeCriticalSection(input);
-		    			Operation.clearMyRequestsMap(file, readWriteOpn);
-		    			Operation.updateRepliesMap(file, readWriteOpn);
-		    			Operation.exitCriticalSection(file, readWriteOpn);		    			
-		    			Operation.sendDeferredReply(file, readWriteOpn);
+		    		synchronized(this) {    		
+			    		Operation.setMyRepliesMap(file, readWriteOpn, host);
+			    		if(Operation.gotRequiredReplies(file, readWriteOpn)) {
+			    			Logger.info("Got all required REPLIES to enter critical section for file: " + file + ", and operation: " + readWriteOpn);
+			    			Operation.enterCriticalSection(file, readWriteOpn);
+			    			Operation.executeCriticalSection(input);
+			    			Operation.clearMyRequestsMap(file, readWriteOpn);
+			    			Operation.updateRepliesMap(file, readWriteOpn);
+			    			Operation.exitCriticalSection(file, readWriteOpn);		    			
+			    			Operation.sendDeferredReply(file, readWriteOpn);
+			    		}
 		    		}
 		    		break;
 		    	case WRITE:
 		    	case READ:
-		    		performReadWriteOperation(input);
+		    		synchronized(this) {
+		    			performReadWriteOperation(input);
+		    		}		    		
 		    		break;
 		    	default:
 		    		Logger.error("Illegal operation, not known to client.");
@@ -72,7 +76,7 @@ public class ClientResponder extends Thread {
 		String content = null;
 		long timestamp = Long.parseLong(input[2]);
 		
-		Logger.info("Got " + operation + " request from client: " + host + ", for file: " + file);
+		Logger.info("Got " + operation + " request from client: " + host + ", for file: " + file + ", and timestamp: " + timestamp);
 		
 		if(!Operation.inCriticalSectionStatus(file, operation) && Operation.isMyTimeStampLarger(file, operation, timestamp)) {
 			try {

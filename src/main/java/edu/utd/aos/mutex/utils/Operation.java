@@ -47,7 +47,7 @@ public class Operation {
 	/**
 	 * To check if currently in critical section.
 	 */
-	private static Table<String, String, Boolean> inCriticalSection = HashBasedTable.create();
+	private static HashMap<String, Boolean> inCriticalSection = new HashMap<String, Boolean>();
 	
 	/**
 	 * READ: "READ||file1||timestamp";
@@ -201,22 +201,30 @@ public class Operation {
 	
 	public static boolean isMyTimeStampLarger(String file, String opn, long timestamp) {
 		
-		if(myRequestsMap.get(file, opn) == null || myRequestsMap.get(file, opn).isEmpty()) {
+		Map<String, ArrayList<Long>> row = myRequestsMap.row(file);
+		Long minTimeStamp = Instant.MAX.getEpochSecond();
+		
+		if(row == null || row.isEmpty()) {
 			return true;
-		}
+		}		
 		else {
-			Long myTimestamp = myRequestsMap.get(file, opn).get(0);
-			return myTimestamp > timestamp ? true: false;
-		}
+			for(Map.Entry<String, ArrayList<Long>> hm: row.entrySet()) {
+				if(hm.getValue()!= null && !hm.getValue().isEmpty() && hm.getValue().get(0) < minTimeStamp) {
+					minTimeStamp = hm.getValue().get(0);
+				}
+			}
+		}			
+		Logger.debug("Request's timestamp: " + timestamp + ", and my minimum Timestamp: " + minTimeStamp + ", hence returning: " + (minTimeStamp > timestamp));
+		return minTimeStamp > timestamp ? true: false;
 	}
 	
 	public static void enterCriticalSection(String file, String opn) {
 		Logger.info("Entering critical section for file: " + file + ", and opeation: " + opn);
-		inCriticalSection.put(file, opn, true);
+		inCriticalSection.put(file, true);
 	}
 	
 	public static void exitCriticalSection(String file, String opn) {		
-		inCriticalSection.put(file, opn, false);
+		inCriticalSection.put(file, false);
 		Logger.info("Exiting critical section for file: " + file + ", and operation: " + opn);
 	}
 	
@@ -283,10 +291,10 @@ public class Operation {
 	}
 
 	public static boolean inCriticalSectionStatus(String file, String opn) {
-		if(inCriticalSection.get(file, opn) == null) {
+		if(inCriticalSection.get(file) == null) {
 			return false;
 		}else {
-			return inCriticalSection.get(file, opn);
+			return inCriticalSection.get(file);
 		}
 	}
 	
@@ -301,8 +309,8 @@ public class Operation {
 	 * @throws MutexException
 	 */
 	public static void sendReadReply(String address, int port, String file, String operation) throws MutexException {
-		Logger.info("Sending READ REPLY to node: " + address + ", port: " + port + ", for file: " + file + ", and operation: " + operation);
 		port = Host.getPortNumber(address);
+		Logger.info("Sending READ REPLY to node: " + address + ", port: " + port + ", for file: " + file + ", and operation: " + operation);
 		Socket socket = null; 
 	    DataOutputStream out = null;
 	    try {
@@ -317,8 +325,8 @@ public class Operation {
 	}
 	
 	public static void sendWriteReply(String address, int port, String file, String operation, String content) throws MutexException {
-		Logger.info("Sending WRITE REPLY to node: " + address + " for file: " + file + " and operation: " + operation);
 		port = Host.getPortNumber(address);
+		Logger.info("Sending WRITE REPLY to node: " + address + " for file: " + file + " and operation: " + operation);
 		Socket socket = null; 
 	    DataOutputStream out = null;
 	    try {
@@ -416,35 +424,38 @@ public class Operation {
 
 	public static void sendDeferredReply(String file, String readWriteOpn) {
 		
-		try {
-			ArrayList<String> arrayList = myDeferredReplies.get(file, readWriteOpn);
-			if(arrayList == null || arrayList.isEmpty()) {
-				Logger.debug("No deferred replies to send.");
-				return;
-			}
-			
-			else {
-				Logger.debug("Start sending all deferred replies for: " + file + " , and operation: " + readWriteOpn);
-				Logger.debug("Current status: " + myDeferredReplies);
-				for(String pipedString: arrayList) {				
-					if(OperationEnum.READ.toString().equalsIgnoreCase(readWriteOpn)) {
-						String[] input = pipedString.split(MutexReferences.SEPARATOR);
-						String host = input[0];
-						int port = (Integer.parseInt(input[1]));					
-						sendReadReply(host, port, file, readWriteOpn);
-					}
-					else {
-						String[] input = pipedString.split(MutexReferences.SEPARATOR);
-						String host = input[0];
-						String content = input[4];
-						int port = (Integer.parseInt(input[1]));
-						sendWriteReply(host, port, file, readWriteOpn, content);
+		Logger.debug("My current deferred repiles map: " + myDeferredReplies);
+		
+		if(!myDeferredReplies.containsRow(file) || myDeferredReplies.row(file).isEmpty()) {
+			Logger.debug("No deferred replies to send.");
+			return;
+		}		
+		else {
+			try {
+				Logger.debug("Start sending all deferred replies for: " + file);
+				Map<String, ArrayList<String>> row = myDeferredReplies.row(file);
+				for(Map.Entry<String, ArrayList<String>> hm: row.entrySet()) {
+					ArrayList<String> arrayList = hm.getValue();
+					for(String pipedString: arrayList) {			
+						if(OperationEnum.READ.toString().equalsIgnoreCase(readWriteOpn)) {
+							String[] input = pipedString.split(MutexReferences.SEPARATOR);
+							String host = input[0];
+							int port = (Integer.parseInt(input[1]));					
+							sendReadReply(host, port, file, readWriteOpn);
+						}
+						else {
+							String[] input = pipedString.split(MutexReferences.SEPARATOR);
+							String host = input[0];
+							String content = input[4];
+							int port = (Integer.parseInt(input[1]));
+							sendWriteReply(host, port, file, readWriteOpn, content);
+						}
 					}
 				}
-				Logger.debug("After: " + myDeferredReplies);
+				Logger.debug("After sending my deferred replies, map: " + myDeferredReplies);
+			}catch(Exception e) {
+				Logger.error("Error while sending deferred replies: " + e);
 			}
-		}catch(Exception e) {
-			Logger.error("Error while sending deferred replies: " + e);
 		}
 	}
 }
