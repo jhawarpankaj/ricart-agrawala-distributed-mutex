@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,7 @@ public class Operation {
 	/**
 	 * Row is file name, Column is operation and data is a map of host names and count.
 	 */
-	private static Table<String, String, Map<String, Integer>> myRepliesMap = HashBasedTable.create();
+	private static Table<String, String , Integer> myRepliesMap = HashBasedTable.create();
 	
 	/**
 	 * Key is hostname and value is list of files.
@@ -116,27 +117,18 @@ public class Operation {
 		Logger.debug("Updating my replies map for file: " + file + ", operation: " + opn + ", from host: " + host);
 		Logger.debug("Current status: " + myRepliesMap);
 		
-		Map<String, Integer> status = myRepliesMap.get(file, opn);
+		Integer count = myRepliesMap.get(file, host);
 		
-		if(status == null){
-			Map<String, Integer> updatedMap = new HashMap<String, Integer>();
-			updatedMap.put(host, 1);
-			myRepliesMap.put(file, opn, new HashMap<String, Integer>(updatedMap));
-		}		
-		else {
-			if(status.containsKey(host)) {
-				int count = status.get(host);
-				status.put(host, count + 1);
-				myRepliesMap.put(file, opn, new HashMap<String, Integer>(status));
-			}
-			else {
-				status.put(host, 1);
-				myRepliesMap.put(file, opn, new HashMap<String, Integer>(status));
-			}			
+		if(count == null){
+			myRepliesMap.put(file, host, 1);
+		}
+		else{
+			myRepliesMap.put(file, host, count + 1);
 		}
 		
 		Logger.debug("After update: " + myRepliesMap);
 	}
+
 	
 	/**
 	 * Set/Update deferred map.
@@ -171,15 +163,13 @@ public class Operation {
 		ApplicationConfig applicationConfig = MutexConfigHolder.getApplicationConfig();
 		NodeDetails nodeDetails = applicationConfig.getNodeDetails();
 		List<ClientDetails> clientDetails = nodeDetails.getClientDetails();
-		
 		int count = 0;
+		Map<String, Integer> row = myRepliesMap.row(file);
 		
-		if(!(myRepliesMap.get(file, opn) == null)) {
-			Map<String, Integer> replyFromHosts = myRepliesMap.get(file, opn);
-			for(Map.Entry<String, Integer> status: replyFromHosts.entrySet()) {
-				if(status.getValue() >= 1) {
-					count++;
-				}
+		for(Map.Entry<String, Integer> hm : row.entrySet()) {
+			Integer value = hm.getValue();
+			if(value > 0) {
+				count++;
 			}
 		}
 		return count == clientDetails.size() - 1 ? true: false;
@@ -187,14 +177,16 @@ public class Operation {
 	
 	public static void updateRepliesMap(String file, String opn) {
 		Logger.debug("Updating replies map. Current status: " + myRepliesMap);
-		Map<String, Integer> replyMap = myRepliesMap.get(file, opn);
-		Map<String, Integer> updateMap = new HashMap<String, Integer>();
+		Map<String, Integer> replyMap = myRepliesMap.row(file);
 		for(Map.Entry<String, Integer> status: replyMap.entrySet()) {
 			String host = status.getKey();
 			int val = status.getValue();
-			updateMap.put(host, val - 1);
+			if(val == 0) {
+				Logger.error("A violation of mutual exclusion during : " + opn + ", for file: " + file);
+				continue;
+			}
+			myRepliesMap.put(file, host, val - 1);
 		}
-		myRepliesMap.put(file, opn, new HashMap<String, Integer>(updateMap));
 		Logger.debug("After updating: " + myRepliesMap);
 	}
 	
@@ -209,7 +201,7 @@ public class Operation {
 		}		
 		else {
 			for(Map.Entry<String, ArrayList<Long>> hm: row.entrySet()) {
-				if(hm.getValue()!= null && !hm.getValue().isEmpty() && hm.getValue().get(0) < minTimeStamp) {
+				if(hm.getValue() != null && !hm.getValue().isEmpty() && hm.getValue().get(0) < minTimeStamp) {
 					minTimeStamp = hm.getValue().get(0);
 				}
 			}
@@ -253,7 +245,7 @@ public class Operation {
 		return myRequestsMap;
 	}
 	
-	public static Table<String, String, Map<String, Integer>> getMyRepliesMap() {
+	public static Table<String, String, Integer> getMyRepliesMap() {
 		return myRepliesMap;
 	}
 	

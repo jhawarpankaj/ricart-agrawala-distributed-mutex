@@ -25,6 +25,7 @@ public class ClientResponder extends Thread {
     @Override
     public void run(){
     	try {
+    		
 	    	String received = dis.readUTF();
 	    	String[] input = received.split(MutexReferences.SEPARATOR);
 	    	OperationEnum operation = null;
@@ -40,7 +41,7 @@ public class ClientResponder extends Thread {
 		    		String file = input[1];
 		    		String readWriteOpn = input[2];
 		    		Logger.info("Got REPLY from client: " + host + ", for file: " + file + ", and operation: " + readWriteOpn);
-		    		synchronized(this) {    		
+		    		synchronized(ClientResponder.class) {
 			    		Operation.setMyRepliesMap(file, readWriteOpn, host);
 			    		if(Operation.gotRequiredReplies(file, readWriteOpn)) {
 			    			Logger.info("Got all required REPLIES to enter critical section for file: " + file + ", and operation: " + readWriteOpn);
@@ -55,7 +56,7 @@ public class ClientResponder extends Thread {
 		    		break;
 		    	case WRITE:
 		    	case READ:
-		    		synchronized(this) {
+		    		synchronized(ClientResponder.class) {
 		    			performReadWriteOperation(input);
 		    		}		    		
 		    		break;
@@ -70,7 +71,7 @@ public class ClientResponder extends Thread {
 
 	private void performReadWriteOperation(String[] input) {
 		String host = worker.getInetAddress().getHostName();
-		int port = worker.getPort();
+		int port = Host.getPortNumber(host);
 		String operation = input[0].toString();
 		String file = input[1];
 		String content = null;
