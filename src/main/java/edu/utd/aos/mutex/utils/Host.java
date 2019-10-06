@@ -226,6 +226,10 @@ public class Host {
 		return allServersList.get(rand.nextInt(allServersList.size()));
 	}
 	
+	/**
+	 * @param host Host name.
+	 * @return Port number as int.
+	 */
 	public static int getPortNumber(String host) {
 		ApplicationConfig applicationConfig = MutexConfigHolder.getApplicationConfig();
 		NodeDetails nodeDetails = applicationConfig.getNodeDetails();

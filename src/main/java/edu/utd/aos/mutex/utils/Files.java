@@ -20,6 +20,10 @@ import edu.utd.aos.mutex.references.MutexConfigHolder;
  */
 public class Files {
 	
+	/**
+	 * To create initial files replica on all servers.
+	 * @throws MutexException
+	 */
 	public static void createFileReplicaOnServer() throws MutexException {
 		Logger.info("Creating replica of files on the server.");
 		ApplicationConfig applicationConfig = MutexConfigHolder.getApplicationConfig();

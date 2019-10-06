@@ -25,6 +25,10 @@ import edu.utd.aos.mutex.references.OperationEnum;
  */
 public class SocketHandler {
 	
+	/**
+	 * Setting up client or server sockets depending on type on node.
+	 * @throws MutexException
+	 */
 	public static void setup() throws MutexException{
 		if(Host.isServer()) {
 			try {

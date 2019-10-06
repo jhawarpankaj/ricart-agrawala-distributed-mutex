@@ -4,6 +4,11 @@ import org.tinylog.Logger;
 
 import edu.utd.aos.mutex.references.MutexReferences;
 
+/**
+ * To randomly generate client READ/WRITE operation.
+ * @author pankaj
+ *
+ */
 public class ClientOperationGenerator extends Thread {
 	
 	

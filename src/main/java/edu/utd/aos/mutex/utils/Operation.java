@@ -179,6 +179,11 @@ public class Operation {
 		return count == clientDetails.size() - 1 ? true: false;
 	}
 	
+	/**
+	 * Update the count of the replies.
+	 * @param file Name of the file.
+	 * @param opn Name of the operation.(READ/WRITE)
+	 */
 	public static void updateRepliesMap(String file, String opn) {
 		Logger.debug("Updating replies map. Current status: " + myRepliesMap);
 		Map<String, Integer> replyMap = myRepliesMap.row(file);
@@ -201,6 +206,11 @@ public class Operation {
 	}
 	
 	
+	/**
+	 * @param file Name of the file.
+	 * @param host Name of the host.
+	 * @return True if req from host for file deferred.
+	 */
 	private static boolean inDeferredMap(String file, String host) {
 		Map<String, ArrayList<String>> row = myDeferredReplies.row(file);
 		if(row == null || row.isEmpty()) {
@@ -219,6 +229,12 @@ public class Operation {
 	}
 
 
+	/**
+	 * @param file Name of the file.
+	 * @param opn READ/WRITE operation.
+	 * @param timestamp Timestamp of the req.
+	 * @return True if my requests timestamp lesser else false.
+	 */
 	public static boolean isMyTimeStampLarger(String file, String opn, long timestamp) {
 		
 		Map<String, ArrayList<Long>> row = myRequestsMap.row(file);
@@ -238,11 +254,20 @@ public class Operation {
 		return minTimeStamp > timestamp ? true: false;
 	}
 	
+	/**
+	 * To mark flag to enter critical section.
+	 * @param file Name of the file.
+	 * @param opn Name of the READ/WRITE operation.
+	 */
 	public static void enterCriticalSection(String file, String opn) {
 		Logger.info("Entering critical section for file: " + file + ", and opeation: " + opn);
 		inCriticalSection.put(file, true);
 	}
 	
+	/**
+	 * To exit from the critical section.
+	 * @param file Name of the file.
+	 */
 	public static void exitCriticalSection(String file) {		
 		inCriticalSection.put(file, false);
 		Logger.info("Exiting critical section for file: " + file );
@@ -295,6 +320,11 @@ public class Operation {
 		}		
 	}
 	
+	/**
+	 * Clear deferred replies map.
+	 * @param file Name of the file.
+	 * @param opn Name of the operation.
+	 */
 	public static void clearDeferredRepliesMap(String file, String opn) {
 				
 		ArrayList<String> temp = myDeferredReplies.get(file, opn);
@@ -310,6 +340,12 @@ public class Operation {
 		}
 	}
 
+	/**
+	 * To check if in critical section currently.
+	 * @param file Name of the file.
+	 * @param opn Name of the operation.
+	 * @return True if currently in critical section else false.
+	 */
 	public static boolean inCriticalSectionStatus(String file, String opn) {
 		if(inCriticalSection.get(file) == null) {
 			return false;

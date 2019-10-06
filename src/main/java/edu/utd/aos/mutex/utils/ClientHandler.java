@@ -18,6 +18,10 @@ import edu.utd.aos.mutex.references.MutexReferences;
 import edu.utd.aos.mutex.references.OperationEnum;
 import org.apache.commons.io.input.*;
 
+/** To handle clients requests.
+ * @author pankaj
+ *
+ */
 public class ClientHandler extends Thread {
     final Socket worker;
 	final DataInputStream dis;

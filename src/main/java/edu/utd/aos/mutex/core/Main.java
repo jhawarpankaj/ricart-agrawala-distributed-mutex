@@ -10,6 +10,10 @@ import edu.utd.aos.mutex.utils.SocketHandler;
 
 public class Main {
 
+	/**
+	 * Main method to be executed.
+	 * @param args
+	 */
 	public static void main(final String[] args) {
 		
 		try {
@@ -21,11 +25,19 @@ public class Main {
 		}
 	}
 
+	/**
+	 * Initializing config files.
+	 * @throws MutexException
+	 */
 	private static void initialize() throws MutexException {
 		MutexConfigHolder.initialize();
 		Host.initialize();
 	}
 
+	/**
+	 * Setting up all socket and files related pre-requisites.
+	 * @throws MutexException
+	 */
 	private static void setup() throws MutexException {		
 		Files.createFileReplicaOnServer();
 		SocketHandler.setup();

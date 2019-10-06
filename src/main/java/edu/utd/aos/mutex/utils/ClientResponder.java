@@ -11,6 +11,11 @@ import edu.utd.aos.mutex.exception.MutexException;
 import edu.utd.aos.mutex.references.MutexReferences;
 import edu.utd.aos.mutex.references.OperationEnum;
 
+/**
+ * To respond to fellow clients requests.
+ * @author pankaj
+ *
+ */
 public class ClientResponder extends Thread {
     final Socket worker; //request came from this worker.
 	final DataInputStream dis;
@@ -71,6 +76,10 @@ public class ClientResponder extends Thread {
     	}
     }
 
+	/**
+	 *  To perform RAD/WRITE requests of fellow clients.
+	 * @param input Input string from fellow client.
+	 */
 	private void performReadWriteOperation(String[] input) {
 		String host = worker.getInetAddress().getHostName();
 		int port = Host.getPortNumber(host);

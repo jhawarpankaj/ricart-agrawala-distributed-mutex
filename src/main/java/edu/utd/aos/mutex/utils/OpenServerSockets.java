@@ -9,6 +9,11 @@ import org.tinylog.Logger;
 
 import edu.utd.aos.mutex.exception.MutexException;
 
+/**
+ * To open server socket.
+ * @author pankaj
+ *
+ */
 public class OpenServerSockets extends Thread {
 	
 	@Override
