@@ -1,0 +1,24 @@
+-Dmutex.config=/home/013/p/px/pxj180019/files/applicationConfig.json
+-Dmutex.config=/home/pankaj/Desktop/UTD-Semesters/19Fall/AOS/Assignment/Project1/files/applicationConfig.json
+
+
+# Server
+java -jar -Dlog.file=file1.txt -Dtinylog.debug=debug -Dmutex.config=/home/013/p/px/pxj180019/files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=1.txt -Dtinylog.debug=debug -Dmutex.config=/home/013/p/px/pxj180019/files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=2.txt -Dtinylog.debug=debug -Dmutex.config=/home/013/p/px/pxj180019/files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=3.txt -Dtinylog.debug=debug -Dmutex.config=/home/013/p/px/pxj180019/files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=4.txt -Dtinylog.debug=debug -Dmutex.config=/home/013/p/px/pxj180019/files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=5.txt -Dtinylog.debug=debug -Dmutex.config=/home/013/p/px/pxj180019/files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+
+
+writer       = file
+writer.file  = logfile/log.txt
+writer.level = info
+writer.format = {date: HH:mm:ss.SSS} {level} {class}.{method}() {message}
+
+
+java -jar -Dlog.file=file1.txt -Dmutex.config=files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=file2.txt -Dmutex.config=files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=file3.txt -Dmutex.config=files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=file4.txt -Dmutex.config=files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
+java -jar -Dlog.file=file5.txt -Dmutex.config=files/applicationConfig.json mutex-0.0.1-SNAPSHOT.jar
