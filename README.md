@@ -18,7 +18,7 @@ In the below command the log.file should be different for each client and server
 
 **Command**:
 
-_ava -jar -Dlog.file=1.txt -Dmutex.config=<path_to_application_config_file> mutex-0.0.1-SNAPSHOT.jar_
+_java -jar -Dlog.file=1.txt -Dmutex.config=<path_to_application_config_file> mutex-0.0.1-SNAPSHOT.jar_
 
 _java -jar -Dlog.file=2.txt -Dmutex.config=<path_to_application_config_file> mutex-0.0.1-SNAPSHOT.jar_
 
