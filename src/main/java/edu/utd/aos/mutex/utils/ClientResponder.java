@@ -27,7 +27,9 @@ public class ClientResponder extends Thread {
     	try {
     		
 	    	String received = dis.readUTF();
+	    	Logger.debug("Received input raw string: " + received);
 	    	String[] input = received.split(MutexReferences.SEPARATOR);
+	    	Logger.debug("Received input array: " + input);
 	    	OperationEnum operation = null;
 	    	try {
 	    		operation = OperationEnum.valueOf(input[0].toUpperCase());
@@ -49,8 +51,8 @@ public class ClientResponder extends Thread {
 			    			Operation.executeCriticalSection(input);
 			    			Operation.clearMyRequestsMap(file, readWriteOpn);
 			    			Operation.updateRepliesMap(file, readWriteOpn);
-			    			Operation.exitCriticalSection(file, readWriteOpn);		    			
-			    			Operation.sendDeferredReply(file, readWriteOpn);
+			    			Operation.exitCriticalSection(file);		    			
+			    			Operation.sendDeferredReply(file);
 			    		}
 		    		}
 		    		break;
@@ -78,8 +80,17 @@ public class ClientResponder extends Thread {
 		long timestamp = Long.parseLong(input[2]);
 		
 		Logger.info("Got " + operation + " request from client: " + host + ", for file: " + file + ", and timestamp: " + timestamp);
-		
-		if(!Operation.inCriticalSectionStatus(file, operation) && Operation.isMyTimeStampLarger(file, operation, timestamp)) {
+		Boolean isCached = Operation.cachedReply.get(file, host);
+		Boolean alreadyGeneratedReq = Operation.alreadyGeneratedRequest.get(file, host);
+		boolean temp = false;
+		if(isCached == null || alreadyGeneratedReq == null) {
+			temp = false;
+		}
+		else {
+			temp = isCached && alreadyGeneratedReq;
+		}
+		Operation.cachedReply.put(file, host, false);
+		if(!Operation.inCriticalSectionStatus(file, operation) && Operation.isMyTimeStampLarger(file, operation, timestamp) && !temp) {
 			try {
 				if(OperationEnum.READ.toString().equalsIgnoreCase(operation)) {
 					Operation.sendReadReply(host, port, file, operation);

@@ -20,25 +20,33 @@ public class ClientRequestSender extends Thread {
 	public void run() {
 		ArrayList<ArrayList<String>> allOtherClients = Host.getAllOtherClients();
 		for(ArrayList<String> client: allOtherClients) {
-			String address = client.get(0);
+			String host = client.get(0);
 			int port = Integer.parseInt(client.get(1));
-			Logger.debug("Sending request to client: " + address + ", on port: " + port);
+			Logger.debug("Sending request to client: " + host + ", on port: " + port);
 			Socket socket = null;
 		    DataOutputStream out = null;
+		    String[] split = operation.split(MutexReferences.SEPARATOR);
+	    	String opn = split[0];
+	    	String file = split[1];
+	    	String timestamp = split[2];
+	    	
+	    	if(Operation.cachedReply.get(file, host)) {
+	    		Logger.debug("Request is already cached hence not generating request: " + opn + " to client: " + host + " for file: " + file);
+	    		Operation.setMyRepliesMap(file, opn, host);
+	    		Operation.alreadyGeneratedRequest.put(file, host, true);
+	    		continue;
+	    	}
 		    try {
-				socket = new Socket(address, port);
-				Logger.info("Requesting client: " + address + " to perform operation: " + operation);
+				socket = new Socket(host, port);
+				Logger.info("Requesting client: " + host + " to perform operation: " + operation);
 		        out = new DataOutputStream(socket.getOutputStream());
 		        out.writeUTF(operation);
 		        socket.close();
 		    }catch(Exception e) {
 
-		    	String[] split = operation.split(MutexReferences.SEPARATOR);
-		    	String opn = split[0];
-		    	String file = split[1];
-		    	String timestamp = split[2];
+		    	
 		    	Operation.clearMyRequestsMap(file, opn, timestamp);
-		    	Logger.error("Error while sending request to client: " + address + ". Error: " + e);
+		    	Logger.error("Error while sending request to client: " + host + ". Error: " + e);
 		    }		        
 		}
 	}

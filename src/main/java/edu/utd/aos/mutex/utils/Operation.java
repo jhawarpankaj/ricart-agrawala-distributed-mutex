@@ -50,6 +50,10 @@ public class Operation {
 	 */
 	private static HashMap<String, Boolean> inCriticalSection = new HashMap<String, Boolean>();
 	
+	public static Table<String, String, Boolean> cachedReply = HashBasedTable.create();
+	
+	public static Table<String, String, Boolean> alreadyGeneratedRequest = HashBasedTable.create();
+	
 	/**
 	 * READ: "READ||file1||timestamp";
 	 * WRITE: "WRITE||file1||timestamp||<id, timestamp>";
@@ -185,12 +189,36 @@ public class Operation {
 				Logger.error("A violation of mutual exclusion during : " + opn + ", for file: " + file);
 				continue;
 			}
+			if(!inDeferredMap(file, host)) {
+				cachedReply.put(file, host, true);
+			}
+			else {
+				cachedReply.put(file, host, false);
+			}
 			myRepliesMap.put(file, host, val - 1);
 		}
 		Logger.debug("After updating: " + myRepliesMap);
 	}
 	
 	
+	private static boolean inDeferredMap(String file, String host) {
+		Map<String, ArrayList<String>> row = myDeferredReplies.row(file);
+		if(row == null || row.isEmpty()) {
+			return false;
+		}
+		for(Map.Entry<String, ArrayList<String>> hm: row.entrySet()) {
+			ArrayList<String> value = hm.getValue();
+			for(String temp: value) {
+				String hostName = temp.split(MutexReferences.SEPARATOR)[0];
+				if(host.equalsIgnoreCase(hostName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+
 	public static boolean isMyTimeStampLarger(String file, String opn, long timestamp) {
 		
 		Map<String, ArrayList<Long>> row = myRequestsMap.row(file);
@@ -215,9 +243,9 @@ public class Operation {
 		inCriticalSection.put(file, true);
 	}
 	
-	public static void exitCriticalSection(String file, String opn) {		
+	public static void exitCriticalSection(String file) {		
 		inCriticalSection.put(file, false);
-		Logger.info("Exiting critical section for file: " + file + ", and operation: " + opn);
+		Logger.info("Exiting critical section for file: " + file );
 	}
 	
 	/**
@@ -310,7 +338,7 @@ public class Operation {
 	        out = new DataOutputStream(socket.getOutputStream());
 	        out.writeUTF(OperationEnum.REPLY.toString() + MutexReferences.SEPARATOR_TEXT + file + MutexReferences.SEPARATOR_TEXT + operation);
 	        socket.close();
-	        clearDeferredRepliesMap(file, operation);
+//	        clearDeferredRepliesMap(file, operation);
 	    }catch(Exception e) {
 	    	throw new MutexException("Error while sending a REPLY for READ message to the client. Error: " + e);
 	    }
@@ -325,10 +353,10 @@ public class Operation {
 			socket = new Socket(address, port);			
 	        out = new DataOutputStream(socket.getOutputStream());
 	        out.writeUTF(OperationEnum.REPLY.toString() + MutexReferences.SEPARATOR_TEXT + file + MutexReferences.SEPARATOR_TEXT + operation + MutexReferences.SEPARATOR_TEXT + content);
-	        clearDeferredRepliesMap(file, operation);
+//	        clearDeferredRepliesMap(file, operation);
 	        socket.close();
 	    }catch(Exception e) {
-	    	throw new MutexException("Error while sending a REPLY for READ message to the client. Error: " + e);
+	    	throw new MutexException("Error while sending a REPLY for WRITE message to the client. Error: " + e);
 	    }
 		
 	}
@@ -414,7 +442,7 @@ public class Operation {
 		}		
 	}
 
-	public static void sendDeferredReply(String file, String readWriteOpn) {
+	public static void sendDeferredReply(String file) {
 		
 		Logger.debug("My current deferred repiles map: " + myDeferredReplies);
 		
@@ -426,24 +454,39 @@ public class Operation {
 			try {
 				Logger.debug("Start sending all deferred replies for: " + file);
 				Map<String, ArrayList<String>> row = myDeferredReplies.row(file);
+				ArrayList<ArrayList<String>> deferredRepliesToDelete = new ArrayList<ArrayList<String>>();
 				for(Map.Entry<String, ArrayList<String>> hm: row.entrySet()) {
 					ArrayList<String> arrayList = hm.getValue();
-					for(String pipedString: arrayList) {			
-						if(OperationEnum.READ.toString().equalsIgnoreCase(readWriteOpn)) {
-							String[] input = pipedString.split(MutexReferences.SEPARATOR);
-							String host = input[0];
-							int port = (Integer.parseInt(input[1]));					
-							sendReadReply(host, port, file, readWriteOpn);
+					for(String pipedString: arrayList) {
+						String[] input = pipedString.split(MutexReferences.SEPARATOR);
+						String host = input[0];
+						int port = (Integer.parseInt(input[1]));
+						String opn = input[2];
+						
+						if(OperationEnum.READ.toString().equalsIgnoreCase(opn)) {					
+							sendReadReply(host, port, file, opn);
+							ArrayList<String> temp = new ArrayList<String>();
+							temp.add(file);
+							temp.add(opn);
+							deferredRepliesToDelete.add(new ArrayList<String>(temp));
 						}
-						else {
-							String[] input = pipedString.split(MutexReferences.SEPARATOR);
-							String host = input[0];
-							String content = input[4];
-							int port = (Integer.parseInt(input[1]));
-							sendWriteReply(host, port, file, readWriteOpn, content);
+						else {			
+							String content = input[5];
+							sendWriteReply(host, port, file, opn, content);
+							ArrayList<String> temp = new ArrayList<String>();
+							temp.add(file);
+							temp.add(opn);
+							deferredRepliesToDelete.add(new ArrayList<String>(temp));
 						}
 					}
 				}
+				
+				for(ArrayList<String> deferredReplies: deferredRepliesToDelete) {
+					String file2 = deferredReplies.get(0);
+					String opn2 = deferredReplies.get(1);
+					clearDeferredRepliesMap(file2, opn2);
+				}
+				deferredRepliesToDelete.clear();
 				Logger.debug("After sending my deferred replies, map: " + myDeferredReplies);
 			}catch(Exception e) {
 				Logger.error("Error while sending deferred replies: " + e);

@@ -55,6 +55,7 @@ public class ClientHandler extends Thread {
 		    		String fileToUpdate = input[1];
 		    		String data = "\n" + input[2] + "\n";
 		    		File fileWrite = new File(Host.getFilePath() + fileToUpdate);
+		    		Logger.debug("Writing to file: " + fileWrite + ", data:" + data + ", operation:" + operation.toString());
 		    		FileUtils.writeStringToFile(fileWrite, data, MutexReferences.ENCODING, true);
 		    		Logger.info("Performing WRITE operation for file: " + fileToUpdate + " for client: " + host);
 		    		dos.writeUTF(Host.getLocalHost());		    		
